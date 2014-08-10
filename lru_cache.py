@@ -19,7 +19,7 @@ class lru_cache:
       node = self.node_map[key]
       if node == self.head:
         return node.value
-      self.enqueue(Node(node.key, node.value))
+      self.enqueue(node.key, node.value)
       return node.value
     else:
       return None
