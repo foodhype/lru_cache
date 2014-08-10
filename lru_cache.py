@@ -1,5 +1,6 @@
 from Queue import deque
 
+
 class lru_cache:
   def __init__(self, capacity):
     self.queue = deque()
@@ -8,26 +9,32 @@ class lru_cache:
     self.head = None
 
   def enqueue(self, key, value):
-    new_node = (key, value)
+    new_node = Node(key, value)
     self.queue.appendleft(new_node)
     self.node_map[key] = new_node
     self.head = new_node
 
-  def get(self, key):
+  def __getitem__(self, key):
     if key in self.node_map.keys():
       node = self.node_map[key]
       if node == self.head:
-        return node[1]
-      self.enqueue(node[0], node[1])
-      return node[1]
+        return node.value
+      self.enqueue(Node(node.key, node.value))
+      return node.value
     else:
       return None
 
-  def set(self, key, value):
-    if self.get(key) is None:
+  def __setitem__(self, key, value):
+    if self[key] is None:
       self.enqueue(key, value)
       if len(self.node_map.keys()) > self.capacity:
         evicted = self.queue.pop()
-        del self.node_map[evicted[0]]
+        del self.node_map[evicted.key]
     else:
-      self.head[1] = value
+      self.head.value = value
+
+
+class Node:
+  def __init__(self, key, value):
+    self.key = key
+    self.value = value
