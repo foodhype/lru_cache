@@ -1,40 +1,106 @@
-from Queue import deque
-
-
 class lru_cache:
-  def __init__(self, capacity):
-    self.queue = deque()
-    self.capacity = capacity
-    self.node_map = {}
-    self.head = None
+    def __init__(self, capacity):
+        """LRU cache constructor."""
+        self.capacity = capacity
+        self.node_map = {}
+        self.sentinel = Node(None, None, True)
+        self.head = self.sentinel
+        self.tail = self.sentinel
 
-  def enqueue(self, key, value):
-    new_node = Node(key, value)
-    self.queue.appendleft(new_node)
-    self.node_map[key] = new_node
-    self.head = new_node
+    def __push(self, key, value):
+        """Push entry to the front of the queue."""
+        # Create node storing key and value.
+        node = Node(key, value)
 
-  def __getitem__(self, key):
-    if key in self.node_map.keys():
-      node = self.node_map[key]
-      if node == self.head:
-        return node.value
-      self.enqueue(node.key, node.value)
-      return node.value
-    else:
-      return None
+        # Push node onto queue.
+        node.next = self.head
+        if self.tail.is_sentinel:
+            self.tail = node
+            self.tail.next = self.sentinel
+        else:
+            self.head.prev = node
+        self.head = node
 
-  def __setitem__(self, key, value):
-    if self[key] is None:
-      self.enqueue(key, value)
-      if len(self.node_map.keys()) > self.capacity:
-        evicted = self.queue.pop()
-        del self.node_map[evicted.key]
-    else:
-      self.head.value = value
+        # Map key to node to allow in-place deletion later.
+        self.node_map[key] = node
+
+    def __pop(self):
+        """Pop entry from the back of the queue."""
+        if self.tail.is_sentinel:
+            raise Exception("Empty list!")
+
+        # Make copy of tail node.
+        key = self.tail.key
+        value = self.tail.value
+        temp = Node(key, value)
+
+        # Delete tail node in-place.
+        self.tail.next = None
+        self.tail.is_sentinel = True
+        self.sentinel.prev = None
+        self.sentinel = self.tail
+
+        # Set new tail if necessary.
+        new_tail = self.tail.prev
+        if new_tail is not None:
+            new_tail.next = self.tail
+            self.tail.prev = new_tail
+            self.tail = new_tail
+
+        return temp
+
+    def __getitem__(self, key):
+        """Get value associated with key if the key exists in the cache."""
+        if key in self.node_map.keys():
+            node = self.node_map[key]
+            if node == self.head:
+                return node.value
+            
+            # Delete node in-place.
+            if node == self.tail:
+                self.__pop()
+            else:
+                node.value = node.next.value
+                node.next = node.next.next
+                node.next.prev = node
+
+            # Push node to the front of the queue.
+            self.__push(node.key, node.value)
+            return node.value
+        else:
+            raise KeyError("Key not found!")
+
+    def __setitem__(self, key, value):
+        """Map key to value in cache."""
+        if key in self.node_map.keys():
+            # Retrieving old value moves it to the front of the queue as a
+            # side-effect (ugly but avoids code duplication).
+            old_value = self[key]
+            # Then we simply need to set its value to value.
+            self.head.value = value
+        else:
+            self.__push(key, value)
+            # If we have exceeded capacity, then we need to evict the entry.
+            if len(self.node_map.keys()) > self.capacity:
+                # Evict the least recently used.
+                evicted = self.__pop()
+                # remove the entry from our node map.
+                del self.node_map[evicted.key]
 
 
-class Node:
-  def __init__(self, key, value):
-    self.key = key
-    self.value = value
+class Node(object):
+    """Doubly linked list node class."""
+
+    def __init__(self, key, value, is_sentinel=False):
+        self.key = key
+        self.value = value
+        self.prev = None
+        self.next = None       
+        self.is_sentinel = is_sentinel
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
