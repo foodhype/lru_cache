@@ -71,7 +71,7 @@ class lru_cache:
 
 class Node(object):
     """Doubly linked list node class for LRU Cache."""
-    def __init__(self, key, value, is_sentinel=False):
+    def __init__(self, key, value):
         self.key = key
         self.value = value
         self.prev = None
