@@ -3,10 +3,12 @@ from collections import OrderedDict
 
 class lru_cache(object):
     def __init__(self, capacity):
+        """LRU cache constructor."""
         self.capacity = capacity
         self.cache = OrderedDict()
 
     def __getitem__(self, key):
+        """Get value associated with key if the key exists in the cache."""
         value = self.cache[key]
         del self.cache[key]
         self.cache[key] = value
@@ -14,8 +16,9 @@ class lru_cache(object):
         return value
 
     def __setitem__(self, key, value):
+        """Map key to value in cache."""
         if key in self.cache:
-            old_value = self[key]
+            self[key]
             self.cache[key] = value
         else:
             self.cache[key] = value

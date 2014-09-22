@@ -52,7 +52,7 @@ class lru_cache:
             self.__push(node.key, node.value)
             return node.value
         else:
-            raise KeyError("Cache miss!")
+            raise KeyError()
 
     def __setitem__(self, key, value):
         """Map key to value in cache."""
@@ -67,6 +67,12 @@ class lru_cache:
                 evicted = self.__pop()
                 # Remove the entry from our node map.
                 del self.node_map[evicted.key]
+
+    def __contains__(self, item):
+        return item in self.node_map.keys()
+
+    def __len__(self):
+        return len(self.node_map.keys())
 
 
 class Node(object):
