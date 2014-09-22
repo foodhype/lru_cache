@@ -1,4 +1,4 @@
-lru_cache
-=========
+memogen
+=======
 
-Python implementation of LRU cache
+Python implementation of automatic memoization.
